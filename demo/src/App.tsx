@@ -3,6 +3,7 @@ import { BrowserProvider } from 'ethers';
 import './App.css';
 import SenderPanel from './components/SenderPanel';
 import ReceiverPanel from './components/ReceiverPanel';
+import arbitrumLogo from '/arbitrum-logo.svg';
 
 interface WalletState {
   address: string | null;
@@ -43,7 +44,7 @@ function App() {
       <nav className="nav">
         <div className="nav-content">
           <div className="nav-left">
-            <img src="/arbitrum-logo.svg" alt="Arbitrum" className="nav-logo" />
+            <img src={arbitrumLogo} alt="Arbitrum" className="nav-logo" />
             <span className="nav-title">ZKPJWT</span>
             <div className="nav-links">
               <button 
@@ -203,7 +204,7 @@ function App() {
           </div>
           <div className="footer-right">
             <span className="footer-powered">Powered by</span>
-            <img src="/arbitrum-logo.svg" alt="Arbitrum" className="footer-logo" />
+            <img src={arbitrumLogo} alt="Arbitrum" className="footer-logo" />
           </div>
         </div>
       </footer>
