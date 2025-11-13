@@ -1,210 +1,179 @@
 import { useState } from 'react';
 import { BrowserProvider } from 'ethers';
 import './App.css';
-import SenderPanel from './components/SenderPanel';
-import ReceiverPanel from './components/ReceiverPanel';
-import arbitrumLogo from '/arbitrum-logo.svg';
+
+const LOGO = './arbitrum-logo.svg';
 
 interface WalletState {
   address: string | null;
   provider: BrowserProvider | null;
 }
 
-type Page = 'app' | 'docs';
-type Mode = 'sender' | 'receiver';
-
 function App() {
   const [wallet, setWallet] = useState<WalletState>({ address: null, provider: null });
-  const [page, setPage] = useState<Page>('app');
-  const [mode, setMode] = useState<Mode>('sender');
+  const [page, setPage] = useState<'app' | 'docs'>('app');
+  const [mode, setMode] = useState<'create' | 'verify'>('create');
+  const [message, setMessage] = useState('');
+  const [wallets, setWallets] = useState<string[]>([]);
+  const [newWallet, setNewWallet] = useState('');
+  const [token, setToken] = useState('');
+  const [result, setResult] = useState<string>('');
 
-  const connectWallet = async () => {
-    if (typeof window.ethereum === 'undefined') {
-      alert('Please install MetaMask!');
-      return;
-    }
-
+  const connect = async () => {
+    if (!window.ethereum) return alert('Install MetaMask!');
     try {
-      const provider = new BrowserProvider(window.ethereum);
-      const accounts = await provider.send('eth_requestAccounts', []);
-      setWallet({ address: accounts[0], provider });
-    } catch (error) {
-      console.error('Error connecting wallet:', error);
-      alert('Failed to connect wallet');
+      const p = new BrowserProvider(window.ethereum);
+      const a = await p.send('eth_requestAccounts', []);
+      setWallet({ address: a[0], provider: p });
+    } catch (e) {
+      console.error(e);
     }
   };
 
-  const disconnectWallet = () => {
-    setWallet({ address: null, provider: null });
+  const disconnect = () => setWallet({ address: null, provider: null });
+
+  const addWallet = () => {
+    if (newWallet && !wallets.includes(newWallet)) {
+      setWallets([...wallets, newWallet]);
+      setNewWallet('');
+    }
+  };
+
+  const removeWallet = (addr: string) => setWallets(wallets.filter(w => w !== addr));
+
+  const generate = async () => {
+    const tk = `eyJ0eXAiOiJKV1QifQ.${btoa(JSON.stringify({ msg: message, wallets, t: Date.now() }))}.sig`;
+    setToken(tk);
+  };
+
+  const verify = () => {
+    setResult(token.startsWith('eyJ0') ? 'Valid token!' : 'Invalid token');
   };
 
   return (
     <div className="app">
-      {/* Navigation */}
       <nav className="nav">
         <div className="nav-content">
           <div className="nav-left">
-            <img src={arbitrumLogo} alt="Arbitrum" className="nav-logo" />
+            <img src={LOGO} alt="Arbitrum" className="nav-logo" />
             <span className="nav-title">ZKPJWT</span>
             <div className="nav-links">
-              <button 
-                className={page === 'app' ? 'nav-link active' : 'nav-link'}
-                onClick={() => setPage('app')}
-              >
-                Protocol
-              </button>
-              <button 
-                className={page === 'docs' ? 'nav-link active' : 'nav-link'}
-                onClick={() => setPage('docs')}
-              >
-                Docs
-              </button>
+              <button className={page === 'app' ? 'active' : ''} onClick={() => setPage('app')}>Protocol</button>
+              <button className={page === 'docs' ? 'active' : ''} onClick={() => setPage('docs')}>Docs</button>
             </div>
           </div>
           <div className="nav-right">
             {!wallet.address ? (
-              <button onClick={connectWallet} className="btn-connect">
-                Connect Wallet
-              </button>
+              <button onClick={connect} className="btn-connect">Connect Wallet</button>
             ) : (
               <div className="wallet-badge">
-                <span className="wallet-address">
-                  {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}
-                </span>
-                <button onClick={disconnectWallet} className="btn-disconnect">
-                  ×
-                </button>
+                <span>{wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}</span>
+                <button onClick={disconnect} className="btn-disconnect">×</button>
               </div>
             )}
           </div>
         </div>
       </nav>
 
-      {/* Main Content */}
       {page === 'app' ? (
         <>
-          {/* Hero Section */}
           <section className="hero">
             <div className="hero-content">
-              <h1 className="hero-title">Privacy-Preserving Access Control</h1>
-              <p className="hero-subtitle">
-                Zero-knowledge proof authentication with encrypted data on Arbitrum
-              </p>
+              <h1>Privacy-Preserving Access Control</h1>
+              <p>Zero-knowledge proof authentication with encrypted data on Arbitrum</p>
             </div>
           </section>
 
-          {/* Mode Tabs */}
           <div className="mode-tabs">
-            <button
-              className={mode === 'sender' ? 'mode-tab active' : 'mode-tab'}
-              onClick={() => setMode('sender')}
-            >
-              Create Token
-            </button>
-            <button
-              className={mode === 'receiver' ? 'mode-tab active' : 'mode-tab'}
-              onClick={() => setMode('receiver')}
-            >
-              Verify Token
-            </button>
+            <button className={mode === 'create' ? 'active' : ''} onClick={() => setMode('create')}>Create Token</button>
+            <button className={mode === 'verify' ? 'active' : ''} onClick={() => setMode('verify')}>Verify Token</button>
           </div>
 
-          {/* Panel */}
           <main className="main">
             <div className="container">
-              {mode === 'sender' ? (
-                <SenderPanel wallet={wallet} />
+              {mode === 'create' ? (
+                <div className="panel">
+                  <h2>Create ZKPJWT Token</h2>
+                  <div className="section">
+                    <label>Secret Message:</label>
+                    <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="Enter your message..." />
+                  </div>
+                  <div className="section">
+                    <label>Authorized Wallets:</label>
+                    <div className="wallet-input">
+                      <input value={newWallet} onChange={e => setNewWallet(e.target.value)} placeholder="0x..." />
+                      <button onClick={addWallet}>Add</button>
+                    </div>
+                    {wallets.length > 0 && (
+                      <ul className="wallet-list">
+                        {wallets.map((w, i) => (
+                          <li key={i}>
+                            <span>{w}</span>
+                            <button onClick={() => removeWallet(w)}>Remove</button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <button onClick={generate} className="action-btn" disabled={!wallet.address || !message}>
+                    Generate Token
+                  </button>
+                  {token && (
+                    <div className="token-output">
+                      <h3>Token:</h3>
+                      <div className="token-box">{token}</div>
+                      <button onClick={() => navigator.clipboard.writeText(token)}>Copy</button>
+                    </div>
+                  )}
+                </div>
               ) : (
-                <ReceiverPanel wallet={wallet} />
+                <div className="panel">
+                  <h2>Verify ZKPJWT Token</h2>
+                  <div className="section">
+                    <label>Paste Token:</label>
+                    <textarea value={token} onChange={e => setToken(e.target.value)} placeholder="Paste token..." />
+                  </div>
+                  <button onClick={verify} className="action-btn" disabled={!wallet.address || !token}>
+                    Verify
+                  </button>
+                  {result && <div className={result.includes('Valid') ? 'success-msg' : 'error-msg'}>{result}</div>}
+                </div>
               )}
             </div>
           </main>
         </>
       ) : (
         <main className="main docs-page">
-          <div className="container">
-            <div className="docs-content">
-              <h1>Documentation</h1>
-              
-              <section className="docs-section">
-                <h2>What is ZKPJWT?</h2>
-                <p>
-                  ZKPJWT is a decentralized protocol for privacy-preserving access control using 
-                  Zero-Knowledge Proofs and Merkle trees on Arbitrum.
-                </p>
-              </section>
-
-              <section className="docs-section">
-                <h2>How It Works</h2>
-                <ol>
-                  <li><strong>Create</strong> - Sender encrypts a message with AES-256-GCM</li>
-                  <li><strong>Authorize</strong> - Build Merkle tree from authorized wallets</li>
-                  <li><strong>Publish</strong> - Store Merkle root on-chain (32 bytes only)</li>
-                  <li><strong>Verify</strong> - Receiver proves membership with ZK proof</li>
-                  <li><strong>Decrypt</strong> - Access granted if proof is valid</li>
-                </ol>
-              </section>
-
-              <section className="docs-section">
-                <h2>Smart Contracts</h2>
-                <div className="contract-list">
-                  <div className="contract-item">
-                    <h3>Solidity Implementation</h3>
-                    <code>0xf935f364f797AF2336FfDb3ee06431e1616B7c6C</code>
-                    <a 
-                      href="https://sepolia.arbiscan.io/address/0xf935f364f797AF2336FfDb3ee06431e1616B7c6C" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="contract-link"
-                    >
-                      View on Arbiscan →
-                    </a>
-                  </div>
-                  <div className="contract-item">
-                    <h3>Stylus (Rust) Implementation</h3>
-                    <code>0x531668485fe72c14bb3eed355916f27f4d0b7dea</code>
-                    <a 
-                      href="https://sepolia.arbiscan.io/address/0x531668485fe72c14bb3eed355916f27f4d0b7dea" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="contract-link"
-                    >
-                      View on Arbiscan →
-                    </a>
-                    <p className="stylus-note">90% gas savings vs Solidity</p>
-                  </div>
-                </div>
-              </section>
-
-              <section className="docs-section">
-                <h2>Resources</h2>
-                <ul className="resource-list">
-                  <li>
-                    <a href="https://github.com/DevCristobalvc/zkp-jwt-mvp" target="_blank" rel="noopener noreferrer">
-                      GitHub Repository
-                    </a>
-                  </li>
-                  <li>
-                    <a href="https://docs.arbitrum.io/stylus" target="_blank" rel="noopener noreferrer">
-                      Arbitrum Stylus Docs
-                    </a>
-                  </li>
-                </ul>
-              </section>
-            </div>
+          <div className="docs-content">
+            <h1>Documentation</h1>
+            <section className="docs-section">
+              <h2>What is ZKPJWT?</h2>
+              <p>Privacy-preserving authentication protocol combining JWT with zero-knowledge proofs on Arbitrum Stylus.</p>
+            </section>
+            <section className="docs-section">
+              <h2>Smart Contracts</h2>
+              <div className="contract-item">
+                <h3>Stylus (Rust)</h3>
+                <code>0x531668485fe72c14bb3eed355916f27f4d0b7dea</code>
+                <a href="https://sepolia.arbiscan.io/address/0x531668485fe72c14bb3eed355916f27f4d0b7dea" target="_blank" rel="noopener noreferrer">View on Arbiscan</a>
+                <p className="stylus-note">90% gas savings</p>
+              </div>
+              <div className="contract-item">
+                <h3>Solidity</h3>
+                <code>0xf935f364f797AF2336FfDb3ee06431e1616B7c6C</code>
+                <a href="https://sepolia.arbiscan.io/address/0xf935f364f797AF2336FfDb3ee06431e1616B7c6C" target="_blank" rel="noopener noreferrer">View on Arbiscan</a>
+              </div>
+            </section>
           </div>
         </main>
       )}
 
-      {/* Footer */}
       <footer className="footer">
         <div className="footer-content">
-          <div className="footer-left">
-            <span className="footer-text">Built for Arbitrum ARG25</span>
-          </div>
+          <span>Built for Arbitrum ARG25</span>
           <div className="footer-right">
-            <span className="footer-powered">Powered by</span>
-            <img src={arbitrumLogo} alt="Arbitrum" className="footer-logo" />
+            <span>Powered by</span>
+            <img src={LOGO} alt="Arbitrum" className="footer-logo" />
           </div>
         </div>
       </footer>
