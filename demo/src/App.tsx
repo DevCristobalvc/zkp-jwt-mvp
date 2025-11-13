@@ -42,36 +42,46 @@ function App() {
   return (
     <div className="App">
       <header className="app-header">
-        <h1>🔐 ZKPJWT Protocol Demo</h1>
-        <p>Privacy-Preserving Access Control with Zero-Knowledge Proofs</p>
-        
+        <div className="header-top">
+          <div className="logo-section">
+            <img src="/arbitrum-logo.svg" alt="Arbitrum" className="arbitrum-logo" />
+            <div className="title-group">
+              <h1>ZKPJWT Protocol</h1>
+              <p className="subtitle">Privacy-Preserving Access Control</p>
+            </div>
+          </div>
+          
+          {!wallet.address ? (
+            <button onClick={connectWallet} className="connect-btn">
+              Connect Wallet
+            </button>
+          ) : (
+            <div className="wallet-info">
+              <div className="wallet-address">
+                <span className="status-dot"></span>
+                <span>{wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}</span>
+              </div>
+              <button onClick={disconnectWallet} className="disconnect-btn">
+                Disconnect
+              </button>
+            </div>
+          )}
+        </div>
+
         <div className="mode-selector">
           <button 
             className={`mode-btn ${mode === 'sender' ? 'active' : ''}`}
             onClick={() => switchMode('sender')}
           >
-            📤 Sender (Create Token)
+            Sender
           </button>
           <button 
             className={`mode-btn ${mode === 'receiver' ? 'active' : ''}`}
             onClick={() => switchMode('receiver')}
           >
-            📥 Receiver (Decrypt)
+            Receiver
           </button>
         </div>
-
-        {!wallet.address ? (
-          <button onClick={connectWallet} className="connect-btn">
-            Connect MetaMask
-          </button>
-        ) : (
-          <div className="wallet-info">
-            <span>✅ Connected: {wallet.address.slice(0, 6)}...{wallet.address.slice(-4)}</span>
-            <button onClick={disconnectWallet} className="disconnect-btn">
-              Disconnect
-            </button>
-          </div>
-        )}
       </header>
 
       <div className="main-container">
@@ -83,16 +93,26 @@ function App() {
       </div>
 
       <footer className="app-footer">
-        <p>Built for Arbitrum ARG25 Program</p>
-        <p>
-          <a href="https://github.com/DevCristobalvc/zkp-jwt" target="_blank" rel="noopener noreferrer">
-            GitHub
-          </a>
-          {' | '}
-          <a href="https://docs.arbitrum.io/stylus" target="_blank" rel="noopener noreferrer">
-            Arbitrum Stylus
-          </a>
-        </p>
+        <div className="footer-content">
+          <div className="footer-section">
+            <img src="/arbitrum-logo.svg" alt="Arbitrum" className="footer-logo" />
+            <p className="footer-text">Built for Arbitrum ARG25</p>
+          </div>
+          <div className="footer-links">
+            <a href="https://github.com/DevCristobalvc/zkp-jwt-mvp" target="_blank" rel="noopener noreferrer">
+              GitHub
+            </a>
+            <a href="https://sepolia.arbiscan.io/address/0xf935f364f797AF2336FfDb3ee06431e1616B7c6C" target="_blank" rel="noopener noreferrer">
+              Solidity Contract
+            </a>
+            <a href="https://sepolia.arbiscan.io/address/0x531668485fe72c14bb3eed355916f27f4d0b7dea" target="_blank" rel="noopener noreferrer">
+              Stylus Contract
+            </a>
+            <a href="https://docs.arbitrum.io/stylus" target="_blank" rel="noopener noreferrer">
+              Docs
+            </a>
+          </div>
+        </div>
       </footer>
     </div>
   );
